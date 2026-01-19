@@ -1,0 +1,60 @@
+export default {
+  async fetch(request) {
+
+    const { searchParams } = new URL(request.url);
+    const tg = searchParams.get("tg");
+    const bl = searchParams.get("bl");
+    const th = searchParams.get("th");
+
+    if (!tg || !bl || !th) {
+      return new Response(
+        JSON.stringify({ error: "Parameter tg, bl, th wajib" }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+          }
+        }
+      );
+    }
+
+    const url = `https://ki-demang.com/almanak/?do=konversi&tg=${tg}&bl=${bl}&th=${th}`;
+
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0" }
+    });
+
+    const html = await res.text();
+
+    const ambil = (label) => {
+      const r = new RegExp(label + "\\s*</td>\\s*<td[^>]*>(.*?)<", "i");
+      const m = html.match(r);
+      return m ? m[1].replace(/<[^>]+>/g, "").trim() : "-";
+    };
+
+    const data = {
+      "Tanggal Masehi": ambil("Tanggal Masehi"),
+      "Tanggal Jawa": ambil("Tanggal Jawa"),
+      "Tanggal Hijriah": ambil("Tanggal Hijriah"),
+      "Dina, Pasaran": ambil("Dina, Pasaran"),
+      "Windu, Lambang": ambil("Windu, Lambang"),
+      "Warsa": ambil("Warsa"),
+      "Wuku": ambil("Wuku"),
+      "Môngsô": ambil("Môngsô"),
+      "Sadwårå/Paringkêlan": ambil("Sadwårå"),
+      "Haståwårå/Padewan": ambil("Haståwårå"),
+      "Sångåwårå/Padangon": ambil("Sångåwårå"),
+      "Saptåwårå/Pancasuda": ambil("Saptåwårå"),
+      "Rakam": ambil("Rakam"),
+      "Paarasan": ambil("Paarasan")
+    };
+
+    return new Response(JSON.stringify(data), {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+  }
+};
